@@ -10,12 +10,12 @@ namespace DNTPersianUtils.Core.IranCities
         /// <summary>
         /// District Name
         /// </summary>
-        public string DistrictName { get; set; }
+        public string DistrictName { get; set; } = default!;
 
         /// <summary>
         /// Cities
         /// </summary>
-        public ISet<City> Cities { get; set; } = new HashSet<City>();
+        public ISet<City> Cities { get; } = new HashSet<City>();
 
         /// <summary>
         /// ToString
@@ -31,13 +31,12 @@ namespace DNTPersianUtils.Core.IranCities
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            var district = obj as District;
-            if (district == null)
+            if (obj is not District district)
                 return false;
 
-            return this.DistrictName == district.DistrictName;
+            return string.Equals(this.DistrictName, district.DistrictName, System.StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -49,7 +48,7 @@ namespace DNTPersianUtils.Core.IranCities
             unchecked
             {
                 var hash = 17;
-                hash = hash * 23 + DistrictName.GetHashCode();
+                hash = hash * 23 + System.StringComparer.Ordinal.GetHashCode(DistrictName);
                 return hash;
             }
         }

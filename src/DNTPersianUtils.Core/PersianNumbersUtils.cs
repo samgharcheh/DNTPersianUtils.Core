@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 
 namespace DNTPersianUtils.Core
 {
@@ -13,7 +14,7 @@ namespace DNTPersianUtils.Core
         public static string ToPersianNumbers(this int number, string format = "")
         {
             return ToPersianNumbers(!string.IsNullOrEmpty(format) ?
-                    number.ToString(format) : number.ToString(CultureInfo.InvariantCulture));
+                    number.ToString(format, CultureInfo.InvariantCulture) : number.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -22,7 +23,7 @@ namespace DNTPersianUtils.Core
         public static string ToPersianNumbers(this long number, string format = "")
         {
             return ToPersianNumbers(!string.IsNullOrEmpty(format) ?
-                    number.ToString(format) : number.ToString(CultureInfo.InvariantCulture));
+                    number.ToString(format, CultureInfo.InvariantCulture) : number.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace DNTPersianUtils.Core
         {
             if (!number.HasValue) number = 0;
             return ToPersianNumbers(!string.IsNullOrEmpty(format) ?
-                    number.Value.ToString(format) : number.Value.ToString(CultureInfo.InvariantCulture));
+                    number.Value.ToString(format, CultureInfo.InvariantCulture) : number.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -42,7 +43,7 @@ namespace DNTPersianUtils.Core
         {
             if (!number.HasValue) number = 0;
             return ToPersianNumbers(!string.IsNullOrEmpty(format) ?
-                number.Value.ToString(format) : number.Value.ToString(CultureInfo.InvariantCulture));
+                number.Value.ToString(format, CultureInfo.InvariantCulture) : number.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -53,20 +54,65 @@ namespace DNTPersianUtils.Core
         public static string ToPersianNumbers(this string data)
         {
             if (string.IsNullOrWhiteSpace(data)) return string.Empty;
-            return
-               data
-                .ToEnglishNumbers()
-                .Replace("0", "\u06F0")
-                .Replace("1", "\u06F1")
-                .Replace("2", "\u06F2")
-                .Replace("3", "\u06F3")
-                .Replace("4", "\u06F4")
-                .Replace("5", "\u06F5")
-                .Replace("6", "\u06F6")
-                .Replace("7", "\u06F7")
-                .Replace("8", "\u06F8")
-                .Replace("9", "\u06F9")
-                .Replace(".", ",");
+
+            var dataChars = data.ToCharArray();
+            for (var i = 0; i < dataChars.Length; i++)
+            {
+                switch (dataChars[i])
+                {
+                    case '0':
+                    case '\u0660':
+                        dataChars[i] = '\u06F0';
+                        break;
+
+                    case '1':
+                    case '\u0661':
+                        dataChars[i] = '\u06F1';
+                        break;
+
+                    case '2':
+                    case '\u0662':
+                        dataChars[i] = '\u06F2';
+                        break;
+
+                    case '3':
+                    case '\u0663':
+                        dataChars[i] = '\u06F3';
+                        break;
+
+                    case '4':
+                    case '\u0664':
+                        dataChars[i] = '\u06F4';
+                        break;
+
+                    case '5':
+                    case '\u0665':
+                        dataChars[i] = '\u06F5';
+                        break;
+
+                    case '6':
+                    case '\u0666':
+                        dataChars[i] = '\u06F6';
+                        break;
+
+                    case '7':
+                    case '\u0667':
+                        dataChars[i] = '\u06F7';
+                        break;
+
+                    case '8':
+                    case '\u0668':
+                        dataChars[i] = '\u06F8';
+                        break;
+
+                    case '9':
+                    case '\u0669':
+                        dataChars[i] = '\u06F9';
+                        break;
+                }
+            }
+
+            return new string(dataChars);
         }
 
         /// <summary>
@@ -77,28 +123,65 @@ namespace DNTPersianUtils.Core
         public static string ToEnglishNumbers(this string data)
         {
             if (string.IsNullOrWhiteSpace(data)) return string.Empty;
-            return
-               data.Replace("\u0660", "0") //٠
-                   .Replace("\u06F0", "0") //۰
-                   .Replace("\u0661", "1") //١
-                   .Replace("\u06F1", "1") //۱
-                   .Replace("\u0662", "2") //٢
-                   .Replace("\u06F2", "2") //۲
-                   .Replace("\u0663", "3") //٣
-                   .Replace("\u06F3", "3") //۳
-                   .Replace("\u0664", "4") //٤
-                   .Replace("\u06F4", "4") //۴
-                   .Replace("\u0665", "5") //٥
-                   .Replace("\u06F5", "5") //۵
-                   .Replace("\u0666", "6") //٦
-                   .Replace("\u06F6", "6") //۶
-                   .Replace("\u0667", "7") //٧
-                   .Replace("\u06F7", "7") //۷
-                   .Replace("\u0668", "8") //٨
-                   .Replace("\u06F8", "8") //۸
-                   .Replace("\u0669", "9") //٩
-                   .Replace("\u06F9", "9") //۹
-                   ;
+
+            var dataChars = data.ToCharArray();
+            for (var i = 0; i < dataChars.Length; i++)
+            {
+                switch (dataChars[i])
+                {
+                    case '\u06F0':
+                    case '\u0660':
+                        dataChars[i] = '0';
+                        break;
+
+                    case '\u06F1':
+                    case '\u0661':
+                        dataChars[i] = '1';
+                        break;
+
+                    case '\u06F2':
+                    case '\u0662':
+                        dataChars[i] = '2';
+                        break;
+
+                    case '\u06F3':
+                    case '\u0663':
+                        dataChars[i] = '3';
+                        break;
+
+                    case '\u06F4':
+                    case '\u0664':
+                        dataChars[i] = '4';
+                        break;
+
+                    case '\u06F5':
+                    case '\u0665':
+                        dataChars[i] = '5';
+                        break;
+
+                    case '\u06F6':
+                    case '\u0666':
+                        dataChars[i] = '6';
+                        break;
+
+                    case '\u06F7':
+                    case '\u0667':
+                        dataChars[i] = '7';
+                        break;
+
+                    case '\u06F8':
+                    case '\u0668':
+                        dataChars[i] = '8';
+                        break;
+
+                    case '\u06F9':
+                    case '\u0669':
+                        dataChars[i] = '9';
+                        break;
+                }
+            }
+
+            return new string(dataChars);
         }
     }
 }

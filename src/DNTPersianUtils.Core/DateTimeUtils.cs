@@ -11,29 +11,22 @@ namespace DNTPersianUtils.Core
         /// <summary>
         /// Iran Standard Time
         /// </summary>
-        public static readonly TimeZoneInfo IranStandardTime;
+        public static readonly TimeZoneInfo IranStandardTime =
+            TimeZoneInfo.GetSystemTimeZones().FirstOrDefault(timeZoneInfo =>
+                timeZoneInfo.StandardName.Contains("Iran", StringComparison.OrdinalIgnoreCase) ||
+                timeZoneInfo.StandardName.Contains("Tehran", StringComparison.OrdinalIgnoreCase) ||
+                timeZoneInfo.Id.Contains("Iran", StringComparison.OrdinalIgnoreCase) ||
+                timeZoneInfo.Id.Contains("Tehran", StringComparison.OrdinalIgnoreCase)) ??
+#if !NETSTANDARD1_3
+        IranTimeZoneInfo.Instance;
+#else
+        throw new PlatformNotSupportedException($"This OS[{System.Runtime.InteropServices.RuntimeInformation.OSDescription}] doesn't support IranStandardTime.");
+#endif
 
         /// <summary>
         /// Epoch represented as DateTime
         /// </summary>
         public static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        static DateTimeUtils()
-        {
-            IranStandardTime = TimeZoneInfo.GetSystemTimeZones().FirstOrDefault(timeZoneInfo =>
-                timeZoneInfo.StandardName.Contains("Iran") ||
-                timeZoneInfo.StandardName.Contains("Tehran") ||
-                timeZoneInfo.Id.Contains("Iran") ||
-                timeZoneInfo.Id.Contains("Tehran"));
-            if (IranStandardTime == null)
-            {
-#if NET40 || NET45 || NET46
-                throw new PlatformNotSupportedException($"This OS[{Environment.OSVersion.Platform}, {Environment.OSVersion.Version}] doesn't support IranStandardTime.");
-#else
-                throw new PlatformNotSupportedException($"This OS[{System.Runtime.InteropServices.RuntimeInformation.OSDescription}] doesn't support IranStandardTime.");
-#endif
-            }
-        }
 
         /// <summary>
         /// محاسبه سن
@@ -168,7 +161,7 @@ namespace DNTPersianUtils.Core
         /// <summary>
         /// Checks the given date is between the two provided dates
         /// </summary>
-        public static bool IsBetween(this DateTime date, DateTime startDate, DateTime endDate, Boolean compareTime = false)
+        public static bool IsBetween(this DateTime date, DateTime startDate, DateTime endDate, bool compareTime = false)
         {
             return compareTime ? date >= startDate && date <= endDate : date.Date >= startDate.Date && date.Date <= endDate.Date;
         }
@@ -217,5 +210,15 @@ namespace DNTPersianUtils.Core
         /// <param name="offsetInHours">Offset</param>
         public static DateTimeOffset ToDateTimeOffset(this DateTime dt, double offsetInHours = 0)
             => ToDateTimeOffset(dt, offsetInHours == 0 ? TimeSpan.Zero : TimeSpan.FromHours(offsetInHours));
+
+        /// <summary>
+        /// Retruns dt.Date which is the start of the day
+        /// </summary>
+        public static DateTime GetStartOfDay(this DateTime dt) => dt.Date;
+
+        /// <summary>
+        /// Retruns the end of the day
+        /// </summary>
+        public static DateTime GetEndOfDay(this DateTime dt) => dt.Date.AddTicks(-1).AddDays(1);
     }
 }

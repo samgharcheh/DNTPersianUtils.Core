@@ -10,12 +10,12 @@ namespace DNTPersianUtils.Core.IranCities
         /// <summary>
         /// County Name
         /// </summary>
-        public string CountyName { get; set; }
+        public string CountyName { get; set; } = default!;
 
         /// <summary>
         /// Districts
         /// </summary>
-        public ISet<District> Districts { get; set; } = new HashSet<District>();
+        public ISet<District> Districts { get; } = new HashSet<District>();
 
         /// <summary>
         /// ToString
@@ -31,13 +31,12 @@ namespace DNTPersianUtils.Core.IranCities
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            var county = obj as County;
-            if (county == null)
+            if (obj is not County county)
                 return false;
 
-            return this.CountyName == county.CountyName;
+            return string.Equals(this.CountyName, county.CountyName, System.StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -49,7 +48,7 @@ namespace DNTPersianUtils.Core.IranCities
             unchecked
             {
                 var hash = 17;
-                hash = hash * 23 + CountyName.GetHashCode();
+                hash = hash * 23 + System.StringComparer.Ordinal.GetHashCode(CountyName);
                 return hash;
             }
         }

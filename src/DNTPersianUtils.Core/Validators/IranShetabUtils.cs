@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace DNTPersianUtils.Core
@@ -8,7 +9,7 @@ namespace DNTPersianUtils.Core
     /// </summary>
     public static class IranShetabUtils
     {
-        private static readonly Regex _matchIranShetab = new Regex(@"[0-9]{16}", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex _matchIranShetab = new Regex(@"[0-9]{16}", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
 
         /// <summary>
         /// validate Shetab card numbers
@@ -21,7 +22,9 @@ namespace DNTPersianUtils.Core
                 return false;
             }
 
-            creditCardNumber = creditCardNumber.Replace("-", string.Empty).Replace(" ", string.Empty);
+            creditCardNumber = creditCardNumber.ToEnglishNumbers();
+            creditCardNumber = creditCardNumber.Replace("-", string.Empty, StringComparison.OrdinalIgnoreCase)
+                                            .Replace(" ", string.Empty, StringComparison.OrdinalIgnoreCase);
 
             if (creditCardNumber.Length != 16)
             {

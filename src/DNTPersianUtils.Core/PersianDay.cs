@@ -1,4 +1,8 @@
-﻿namespace DNTPersianUtils.Core
+﻿using System.Collections.Generic;
+using System.Globalization;
+using static System.FormattableString;
+
+namespace DNTPersianUtils.Core
 {
     /// <summary>
     /// اجزای روز شمسی
@@ -21,6 +25,11 @@
         public int Day { set; get; }
 
         /// <summary>
+        /// در صورت تعطیل رسمی بودن، با عناوین مناسبت‌ها مقدار دهی خواهد شد
+        /// </summary>
+        public IEnumerable<string>? Holidays { set; get; }
+
+        /// <summary>
         /// اجزای روز شمسی
         /// </summary>
         public PersianDay() { }
@@ -40,7 +49,7 @@
         /// </summary>
         public override string ToString()
         {
-            return $"{Year}/{Month.ToString("00")}/{Day.ToString("00")}";
+            return Invariant($"{Year}/{Month.ToString("00", CultureInfo.InvariantCulture)}/{Day.ToString("00", CultureInfo.InvariantCulture)}");
         }
 
         /// <summary>
@@ -48,10 +57,9 @@
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            var day = obj as PersianDay;
-            if (day == null)
+            if (obj is not PersianDay day)
                 return false;
 
             return this.Year == day.Year &&

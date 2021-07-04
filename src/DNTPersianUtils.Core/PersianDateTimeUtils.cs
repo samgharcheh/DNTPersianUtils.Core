@@ -61,7 +61,8 @@ namespace DNTPersianUtils.Core
         /// با قالب‌های پشتیبانی شده‌ی ۹۰/۸/۱۴ , 1395/11/3 17:30 , ۱۳۹۰/۸/۱۴ , ۹۰-۸-۱۴ , ۱۳۹۰-۸-۱۴
         /// </summary>
         /// <param name="persianDateTime">تاریخ و زمان شمسی</param>
-        public static bool IsValidPersianDateTime(this string persianDateTime)
+        /// <param name="throwOnException"></param>
+        public static bool IsValidPersianDateTime(this string persianDateTime, bool throwOnException = false)
         {
             try
             {
@@ -70,8 +71,23 @@ namespace DNTPersianUtils.Core
             }
             catch
             {
+                if (throwOnException)
+                {
+                    throw;
+                }
                 return false;
             }
+        }
+
+        /// <summary>
+        /// تبدیل به تاریخ شمسی
+        /// </summary>
+        /// <param name="persianYear">سال شمسی</param>
+        /// <param name="persianMonth">ماه شمسی</param>
+        /// <param name="persianDay">روز شمسی</param>
+        public static DateTime ToPersianDate(this int persianYear, int persianMonth, int persianDay)
+        {
+            return new PersianCalendar().ToDateTime(persianYear, persianMonth, persianDay, 0, 0, 0, 0);
         }
 
         /// <summary>
@@ -80,8 +96,10 @@ namespace DNTPersianUtils.Core
         /// در اینجا اگر رشته‌ی مدنظر قابل تبدیل نباشد، مقدار نال را دریافت خواهید کرد
         /// </summary>
         /// <param name="persianDateTime">تاریخ و زمان شمسی</param>
+        /// <param name="convertToUtc">Converts the value of the current DateTime to Coordinated Universal Time (UTC)</param>
+        /// <param name="beginningOfCentury">سال شروع قرن، اگر سال وارد شده دو رقمی است</param>
         /// <returns>تاریخ و زمان میلادی</returns>
-        public static DateTime? ToGregorianDateTime(this string persianDateTime)
+        public static DateTime? ToGregorianDateTime(this string persianDateTime, bool convertToUtc = false, int beginningOfCentury = 1300)
         {
             if (string.IsNullOrWhiteSpace(persianDateTime))
             {
@@ -91,8 +109,8 @@ namespace DNTPersianUtils.Core
             persianDateTime = persianDateTime.Trim().ToEnglishNumbers();
             var splitedDateTime = persianDateTime.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-            var rawTime = splitedDateTime.FirstOrDefault(s => s.Contains(':'));
-            var rawDate = splitedDateTime.FirstOrDefault(s => !s.Contains(':'));
+            var rawTime = Array.Find(splitedDateTime, s => s.Contains(':', StringComparison.OrdinalIgnoreCase));
+            var rawDate = Array.Find(splitedDateTime, s => !s.Contains(':', StringComparison.OrdinalIgnoreCase));
 
             var splitedDate = rawDate?.Split('/', ',', '؍', '.', '-');
             if (splitedDate?.Length != 3)
@@ -112,7 +130,7 @@ namespace DNTPersianUtils.Core
                 return null;
             }
 
-            var year = getYear(splitedDate[0]);
+            var year = getYear(splitedDate[0], beginningOfCentury);
             if (!year.HasValue)
             {
                 return null;
@@ -130,8 +148,8 @@ namespace DNTPersianUtils.Core
             if (!string.IsNullOrWhiteSpace(rawTime))
             {
                 var splitedTime = rawTime.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                hour = int.Parse(splitedTime[0]);
-                minute = int.Parse(splitedTime[1]);
+                hour = int.Parse(splitedTime[0], CultureInfo.InvariantCulture);
+                minute = int.Parse(splitedTime[1], CultureInfo.InvariantCulture);
                 if (splitedTime.Length > 2)
                 {
                     var lastPart = splitedTime[2].Trim();
@@ -145,13 +163,21 @@ namespace DNTPersianUtils.Core
                     }
                     else
                     {
-                        int.TryParse(lastPart, out second);
+                        if (!int.TryParse(lastPart, NumberStyles.Number, CultureInfo.InvariantCulture, out second))
+                        {
+                            second = 0;
+                        }
                     }
                 }
             }
 
             var persianCalendar = new PersianCalendar();
-            return persianCalendar.ToDateTime(year.Value, month.Value, day.Value, hour, minute, second, 0);
+            var dateTime = persianCalendar.ToDateTime(year.Value, month.Value, day.Value, hour, minute, second, 0);
+            if (convertToUtc)
+            {
+                dateTime = dateTime.ToUniversalTime();
+            }
+            return dateTime;
         }
 
         /// <summary>
@@ -160,10 +186,13 @@ namespace DNTPersianUtils.Core
         /// در اینجا اگر رشته‌ی مدنظر قابل تبدیل نباشد، مقدار نال را دریافت خواهید کرد
         /// </summary>
         /// <param name="persianDateTime">تاریخ و زمان شمسی</param>
+        /// <param name="convertToUtc">Converts the value of the current DateTime to Coordinated Universal Time (UTC)</param>
+        /// <param name="beginningOfCentury">سال شروع قرن، اگر سال وارد شده دو رقمی است</param>
         /// <returns>تاریخ و زمان میلادی</returns>
-        public static DateTimeOffset? ToGregorianDateTimeOffset(this string persianDateTime)
+        public static DateTimeOffset? ToGregorianDateTimeOffset(
+            this string persianDateTime, bool convertToUtc = false, int beginningOfCentury = 1300)
         {
-            var dateTime = persianDateTime.ToGregorianDateTime();
+            var dateTime = persianDateTime.ToGregorianDateTime(convertToUtc, beginningOfCentury);
             if (dateTime == null)
             {
                 return null;
@@ -177,9 +206,11 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 21 دی 1395
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToLongPersianDateString(this DateTime dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToLongPersianDateString(this DateTime dt, bool convertToIranTimeZone = true)
         {
-            return dt.ToPersianDateTimeString(PersianCulture.Instance.DateTimeFormat.LongDatePattern);
+            return dt.ToPersianDateTimeString(PersianCulture.Instance.DateTimeFormat.LongDatePattern, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -187,9 +218,11 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 21 دی 1395
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToLongPersianDateString(this DateTime? dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToLongPersianDateString(this DateTime? dt, bool convertToIranTimeZone = true)
         {
-            return dt == null ? string.Empty : ToLongPersianDateString(dt.Value);
+            return dt == null ? string.Empty : ToLongPersianDateString(dt.Value, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -221,10 +254,13 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 21 دی 1395، 10:20:02 ق.ظ
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToLongPersianDateTimeString(this DateTime dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToLongPersianDateTimeString(this DateTime dt, bool convertToIranTimeZone = true)
         {
             return dt.ToPersianDateTimeString(
-                $"{PersianCulture.Instance.DateTimeFormat.LongDatePattern}، {PersianCulture.Instance.DateTimeFormat.LongTimePattern}");
+                $"{PersianCulture.Instance.DateTimeFormat.LongDatePattern}، {PersianCulture.Instance.DateTimeFormat.LongTimePattern}",
+                convertToIranTimeZone);
         }
 
         /// <summary>
@@ -232,9 +268,11 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 21 دی 1395، 10:20:02 ق.ظ
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToLongPersianDateTimeString(this DateTime? dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToLongPersianDateTimeString(this DateTime? dt, bool convertToIranTimeZone = true)
         {
-            return dt == null ? string.Empty : ToLongPersianDateTimeString(dt.Value);
+            return dt == null ? string.Empty : ToLongPersianDateTimeString(dt.Value, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -265,8 +303,15 @@ namespace DNTPersianUtils.Core
         /// تبدیل تاریخ میلادی به شمسی
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToPersianDateTimeString(this DateTime dateTime, string format)
+        /// <param name="dateTime"></param>
+        /// <param name="format"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToPersianDateTimeString(this DateTime dateTime, string format, bool convertToIranTimeZone = true)
         {
+            if (dateTime.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                dateTime = dateTime.ToIranTimeZoneDateTime();
+            }
             return dateTime.ToString(format, PersianCulture.Instance);
         }
 
@@ -277,15 +322,21 @@ namespace DNTPersianUtils.Core
         /// <param name="dateTimeOffsetPart">کدام جزء این وهله مورد استفاده قرار گیرد؟</param>
         public static PersianDay ToPersianYearMonthDay(this DateTimeOffset? gregorianDate, DateTimeOffsetPart dateTimeOffsetPart = DateTimeOffsetPart.IranLocalDateTime)
         {
-            return gregorianDate == null ? throw new ArgumentNullException(nameof(gregorianDate)) : ToPersianYearMonthDay(gregorianDate.Value.GetDateTimeOffsetPart(dateTimeOffsetPart));
+            return gregorianDate == null ?
+               throw new ArgumentNullException(nameof(gregorianDate)) :
+               ToPersianYearMonthDay(gregorianDate.Value.GetDateTimeOffsetPart(dateTimeOffsetPart));
         }
 
         /// <summary>
         /// تبدیل تاریخ میلادی به شمسی و دریافت اجزای سال، ماه و روز نتیجه‌ی حاصل‌
         /// </summary>
-        public static PersianDay ToPersianYearMonthDay(this DateTime? gregorianDate)
+        /// <param name="gregorianDate"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static PersianDay ToPersianYearMonthDay(this DateTime? gregorianDate, bool convertToIranTimeZone = true)
         {
-            return gregorianDate == null ? throw new ArgumentNullException(nameof(gregorianDate)) : ToPersianYearMonthDay(gregorianDate.Value);
+            return gregorianDate == null ?
+                throw new ArgumentNullException(nameof(gregorianDate)) :
+                ToPersianYearMonthDay(gregorianDate.Value, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -301,13 +352,27 @@ namespace DNTPersianUtils.Core
         /// <summary>
         /// تبدیل تاریخ میلادی به شمسی و دریافت اجزای سال، ماه و روز نتیجه‌ی حاصل‌
         /// </summary>
-        public static PersianDay ToPersianYearMonthDay(this DateTime gregorianDate)
+        /// <param name="gregorianDate"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static PersianDay ToPersianYearMonthDay(this DateTime gregorianDate, bool convertToIranTimeZone = true)
         {
+            if (gregorianDate.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                gregorianDate = gregorianDate.ToIranTimeZoneDateTime();
+            }
+
             var persianCalendar = new PersianCalendar();
             var persianYear = persianCalendar.GetYear(gregorianDate);
             var persianMonth = persianCalendar.GetMonth(gregorianDate);
             var persianDay = persianCalendar.GetDayOfMonth(gregorianDate);
-            return new PersianDay { Year = persianYear, Month = persianMonth, Day = persianDay };
+            var holidays = gregorianDate.GetHolidays(convertToIranTimeZone);
+            return new PersianDay
+            {
+                Year = persianYear,
+                Month = persianMonth,
+                Day = persianDay,
+                Holidays = holidays
+            };
         }
 
         /// <summary>
@@ -339,9 +404,11 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 1395/10/21
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToShortPersianDateString(this DateTime dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToShortPersianDateString(this DateTime dt, bool convertToIranTimeZone = true)
         {
-            return dt.ToPersianDateTimeString(PersianCulture.Instance.DateTimeFormat.ShortDatePattern);
+            return dt.ToPersianDateTimeString(PersianCulture.Instance.DateTimeFormat.ShortDatePattern, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -349,9 +416,11 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 1395/10/21
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToShortPersianDateString(this DateTime? dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToShortPersianDateString(this DateTime? dt, bool convertToIranTimeZone = true)
         {
-            return dt == null ? string.Empty : ToShortPersianDateString(dt.Value);
+            return dt == null ? string.Empty : ToShortPersianDateString(dt.Value, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -359,10 +428,13 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 1395/10/21 10:20
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToShortPersianDateTimeString(this DateTime dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToShortPersianDateTimeString(this DateTime dt, bool convertToIranTimeZone = true)
         {
             return dt.ToPersianDateTimeString(
-                $"{PersianCulture.Instance.DateTimeFormat.ShortDatePattern} {PersianCulture.Instance.DateTimeFormat.ShortTimePattern}");
+                $"{PersianCulture.Instance.DateTimeFormat.ShortDatePattern} {PersianCulture.Instance.DateTimeFormat.ShortTimePattern}",
+                convertToIranTimeZone);
         }
 
         /// <summary>
@@ -370,9 +442,11 @@ namespace DNTPersianUtils.Core
         /// با قالبی مانند 1395/10/21 10:20
         /// </summary>
         /// <returns>تاریخ شمسی</returns>
-        public static string ToShortPersianDateTimeString(this DateTime? dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string ToShortPersianDateTimeString(this DateTime? dt, bool convertToIranTimeZone = true)
         {
-            return dt == null ? string.Empty : ToShortPersianDateTimeString(dt.Value);
+            return dt == null ? string.Empty : ToShortPersianDateTimeString(dt.Value, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -417,19 +491,18 @@ namespace DNTPersianUtils.Core
             return pMonth;
         }
 
-        private static int? getYear(string part)
+        private static int? getYear(string part, int beginningOfCentury)
         {
             var year = part.toNumber();
             if (!year.Item1) return null;
             var pYear = year.Item2;
-            if (part.Length == 2) pYear += 1300;
+            if (part.Length == 2) pYear += beginningOfCentury;
             return pYear;
         }
 
         private static Tuple<bool, int> toNumber(this string data)
         {
-            int number;
-            bool result = int.TryParse(data, out number);
+            bool result = int.TryParse(data, NumberStyles.Number, CultureInfo.InvariantCulture, out var number);
             return new Tuple<bool, int>(result, number);
         }
     }

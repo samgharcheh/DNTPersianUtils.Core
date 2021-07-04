@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace DNTPersianUtils.Core.Normalizer
@@ -8,28 +10,28 @@ namespace DNTPersianUtils.Core.Normalizer
     /// </summary>
     public static class AggressiveEditing
     {
-        private static readonly Regex _matchCleanupExtraMarks1 = new Regex(@"(!){2,}", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchCleanupExtraMarks2 = new Regex("(؟){2,}", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex _matchCleanupExtraMarks1 = new Regex(@"(!){2,}", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchCleanupExtraMarks2 = new Regex("(؟){2,}", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
 
-        private static readonly Regex _matchCleanupSpacingAndLineBreaks1 = new Regex(@"[ ]+", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchCleanupSpacingAndLineBreaks2 = new Regex("([\n]+)[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex _matchCleanupSpacingAndLineBreaks1 = new Regex(@"[ ]+", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchCleanupSpacingAndLineBreaks2 = new Regex("([\n]+)[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
 
-        private static readonly Regex _matchRemoveAllKashida = new Regex("ـ+", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex _matchRemoveAllKashida = new Regex("ـ+", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
 
-        private static readonly Regex _matchRemoveOutsideInsideSpacing1 = new Regex(@"[   ‌]*(\()\s*([^)]+?)\s*?(\))[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing10 = new Regex(@"(\{)\s*([^)]+?)\s*?(\})", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing11 = new Regex(@"(“)\s*([^)]+?)\s*?(”)", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing12 = new Regex(@"(«)\s*([^)]+?)\s*?(»)", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing2 = new Regex(@"[   ‌]*(\[)\s*([^)]+?)\s*?(\])[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing3 = new Regex(@"[   ‌]*(\{)\s*([^)]+?)\s*?(\})[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing4 = new Regex(@"[   ‌]*(“)\s*([^)]+?)\s*?(”)[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing5 = new Regex(@"[   ‌]*(«)\s*([^)]+?)\s*?(»)[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing6 = new Regex(@"[ ?  ]*([:;,??.?!]{1})[ ?  ]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing7 = new Regex(@"([0-9]+):\s+([0-9]+)", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing8 = new Regex(@"(\()\s*([^)]+?)\s*?(\))", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex _matchRemoveOutsideInsideSpacing9 = new Regex(@"(\[)\s*([^)]+?)\s*?(\])", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing1 = new Regex(@"[   ‌]*(\()\s*([^)]+?)\s*?(\))[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing10 = new Regex(@"(\{)\s*([^)]+?)\s*?(\})", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing11 = new Regex(@"(“)\s*([^)]+?)\s*?(”)", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing12 = new Regex(@"(«)\s*([^)]+?)\s*?(»)", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing2 = new Regex(@"[   ‌]*(\[)\s*([^)]+?)\s*?(\])[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing3 = new Regex(@"[   ‌]*(\{)\s*([^)]+?)\s*?(\})[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing4 = new Regex(@"[   ‌]*(“)\s*([^)]+?)\s*?(”)[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing5 = new Regex(@"[   ‌]*(«)\s*([^)]+?)\s*?(»)[   ‌]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing6 = new Regex(@"[ ?  ]*([:;,??.?!]{1})[ ?  ]*", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing7 = new Regex(@"([0-9]+):\s+([0-9]+)", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing8 = new Regex(@"(\()\s*([^)]+?)\s*?(\))", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
+        private static readonly Regex _matchRemoveOutsideInsideSpacing9 = new Regex(@"(\[)\s*([^)]+?)\s*?(\])", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
 
-        private static readonly Regex _matchHexadecimalSymbols = new Regex("[\x00-\x08\x0B\x0C\x0E-\x1F]", options: RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex _matchHexadecimalSymbols = new Regex("[\x00-\x08\x0B\x0C\x0E-\x1F]", options: RegexOptions.Compiled | RegexOptions.IgnoreCase, matchTimeout: RegexUtils.MatchTimeout);
 
         /// <summary>
         /// Removes all kashida
@@ -108,8 +110,8 @@ namespace DNTPersianUtils.Core.Normalizer
             const char chr1600 = (char)1600; //ـ=1600
             const char chr8204 = (char)8204; //‌=8204
 
-            return text.Replace(chr1600.ToString(), "")
-                       .Replace(chr8204.ToString(), "");
+            return text.Replace(chr1600.ToString(), "", StringComparison.OrdinalIgnoreCase)
+                       .Replace(chr8204.ToString(), "", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

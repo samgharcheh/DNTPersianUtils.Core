@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using static System.FormattableString;
 
 namespace DNTPersianUtils.Core
 {
@@ -12,25 +13,25 @@ namespace DNTPersianUtils.Core
         /// نمایش فارسی روز دریافتی شمسی
         /// مانند سه شنبه ۲۱ دی ۱۳۹۵
         /// </summary>
-        public static string ToPersianDateTextify(int persianYear, int persianMonth, int persianDay)
+        public static string ToPersianDateTextify(int persianYear, int persianMonth, int persianDay, int beginningOfCentury = 1300)
         {
             if (persianYear <= 99)
             {
-                persianYear += 1300;
+                persianYear += beginningOfCentury;
             }
 
             var strDay = PersianCulture.GetPersianWeekDayName(persianYear, persianMonth, persianDay);
             var strMonth = PersianCulture.PersianMonthNames[persianMonth];
-            return $"{strDay} {persianDay} {strMonth} {persianYear}".ToPersianNumbers();
+            return Invariant($"{strDay} {persianDay} {strMonth} {persianYear}").ToPersianNumbers();
         }
 
         /// <summary>
         /// نمایش فارسی روز دریافتی
         /// مانند سه شنبه ۲۱ دی ۱۳۹۵
         /// </summary>
-        public static string ToPersianDateTextify(this DateTime dt)
+        public static string ToPersianDateTextify(this DateTime dt, bool convertToIranTimeZone = true)
         {
-            var dateParts = dt.ToPersianYearMonthDay();
+            var dateParts = dt.ToPersianYearMonthDay(convertToIranTimeZone);
             return ToPersianDateTextify(dateParts.Year, dateParts.Month, dateParts.Day);
         }
 
@@ -72,10 +73,13 @@ namespace DNTPersianUtils.Core
         /// <param name="dt">تاریخ ورودی</param>
         /// <param name="comparisonBase">مبنای مقایسه مانند هم اکنون</param>
         /// <param name="appendHhMm">آیا ساعت نیز به نتیجه‌اضافه شود؟</param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        /// <param name="includePersianDate">آیا تاریخ نیز به نتیجه اضافه شود؟</param>
         /// <returns>نمایش دوستانه</returns>
-        public static string ToFriendlyPersianDateTextify(this DateTime dt, DateTime comparisonBase, bool appendHhMm = true)
+        public static string ToFriendlyPersianDateTextify(
+            this DateTime dt, DateTime comparisonBase, bool appendHhMm = true, bool convertToIranTimeZone = true, bool includePersianDate = true)
         {
-            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(dt, comparisonBase, appendHhMm).ToPersianNumbers()}";
+            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(dt, comparisonBase, appendHhMm, convertToIranTimeZone, includePersianDate).ToPersianNumbers()}";
         }
 
         /// <summary>
@@ -85,11 +89,14 @@ namespace DNTPersianUtils.Core
         /// </summary>
         /// <param name="dt">تاریخ ورودی</param>
         /// <param name="appendHhMm">آیا ساعت نیز به نتیجه‌اضافه شود؟</param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        /// <param name="includePersianDate">آیا تاریخ نیز به نتیجه اضافه شود؟</param>
         /// <returns>نمایش دوستانه</returns>
-        public static string ToFriendlyPersianDateTextify(this DateTime dt, bool appendHhMm = true)
+        public static string ToFriendlyPersianDateTextify(
+            this DateTime dt, bool appendHhMm = true, bool convertToIranTimeZone = true, bool includePersianDate = true)
         {
-            var comparisonBase = dt.Kind.GetNow().ToIranTimeZoneDateTime();
-            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(dt.ToIranTimeZoneDateTime(), comparisonBase, appendHhMm).ToPersianNumbers()}";
+            var comparisonBase = convertToIranTimeZone ? dt.Kind.GetNow().ToIranTimeZoneDateTime() : dt.Kind.GetNow();
+            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(dt, comparisonBase, appendHhMm, convertToIranTimeZone, includePersianDate).ToPersianNumbers()}";
         }
 
         /// <summary>
@@ -100,10 +107,13 @@ namespace DNTPersianUtils.Core
         /// <param name="comparisonBase">مبنای مقایسه مانند هم اکنون</param>
         /// <param name="dateTimeOffsetPart">کدام جزء این وهله مورد استفاده قرار گیرد؟</param>
         /// <param name="appendHhMm">آیا ساعت نیز به نتیجه‌اضافه شود؟</param>
+        /// <param name="includePersianDate">آیا تاریخ نیز به نتیجه اضافه شود؟</param>
         /// <returns>نمایش دوستانه</returns>
-        public static string ToFriendlyPersianDateTextify(this DateTimeOffset dt, DateTime comparisonBase, DateTimeOffsetPart dateTimeOffsetPart = DateTimeOffsetPart.IranLocalDateTime, bool appendHhMm = true)
+        public static string ToFriendlyPersianDateTextify(
+            this DateTimeOffset dt, DateTime comparisonBase,
+            DateTimeOffsetPart dateTimeOffsetPart = DateTimeOffsetPart.IranLocalDateTime, bool appendHhMm = true, bool includePersianDate = true)
         {
-            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(dt.GetDateTimeOffsetPart(dateTimeOffsetPart), comparisonBase, appendHhMm).ToPersianNumbers()}";
+            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(dt.GetDateTimeOffsetPart(dateTimeOffsetPart), comparisonBase, appendHhMm, false, includePersianDate).ToPersianNumbers()}";
         }
 
         /// <summary>
@@ -113,12 +123,13 @@ namespace DNTPersianUtils.Core
         /// </summary>
         /// <param name="dt">تاریخ ورودی</param>
         /// <param name="appendHhMm">آیا ساعت نیز به نتیجه‌اضافه شود؟</param>
+        /// <param name="includePersianDate">آیا تاریخ نیز به نتیجه اضافه شود؟</param>
         /// <returns>نمایش دوستانه</returns>
-        public static string ToFriendlyPersianDateTextify(this DateTimeOffset dt, bool appendHhMm = true)
+        public static string ToFriendlyPersianDateTextify(this DateTimeOffset dt, bool appendHhMm = true, bool includePersianDate = true)
         {
             var comparisonBase = DateTime.UtcNow.ToIranTimeZoneDateTime();
             var iranLocalTime = dt.GetDateTimeOffsetPart(DateTimeOffsetPart.IranLocalDateTime);
-            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(iranLocalTime, comparisonBase, appendHhMm).ToPersianNumbers()}";
+            return $"{UnicodeConstants.RleChar}{toFriendlyPersianDate(iranLocalTime, comparisonBase, appendHhMm, false, includePersianDate).ToPersianNumbers()}";
         }
 
         /// <summary>
@@ -139,15 +150,16 @@ namespace DNTPersianUtils.Core
         /// مانند ۱۰ روز قبل، سه شنبه ۲۱ دی ۱۳۹۵، ساعت ۱۰:۲۰
         /// </summary>
         /// <param name="dt">تاریخ ورودی</param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
         /// <returns>نمایش دوستانه</returns>
-        public static string ToFriendlyPersianDateTextify(this DateTime? dt)
+        public static string ToFriendlyPersianDateTextify(this DateTime? dt, bool convertToIranTimeZone = true)
         {
             if (dt == null)
             {
                 return string.Empty;
             }
-            var comparisonBase = dt.Value.Kind.GetNow().ToIranTimeZoneDateTime();
-            return ToFriendlyPersianDateTextify(dt.Value.ToIranTimeZoneDateTime(), comparisonBase);
+            var comparisonBase = convertToIranTimeZone ? dt.Value.Kind.GetNow().ToIranTimeZoneDateTime() : dt.Value.Kind.GetNow();
+            return ToFriendlyPersianDateTextify(dt.Value, comparisonBase, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -181,9 +193,18 @@ namespace DNTPersianUtils.Core
             return ToFriendlyPersianDateTextify(iranLocalTime, comparisonBase);
         }
 
-        private static string toFriendlyPersianDate(this DateTime dt, DateTime comparisonBase, bool appendHhMm)
+        private static string toFriendlyPersianDate(
+            this DateTime dt,
+            DateTime comparisonBase,
+            bool appendHhMm,
+            bool convertToIranTimeZone,
+            bool includePersianDate)
         {
-            var persianDate = dt.ToPersianYearMonthDay();
+            if (dt.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                dt = dt.ToIranTimeZoneDateTime();
+            }
+            var persianDate = dt.ToPersianYearMonthDay(false);
 
             //1388/10/22
             var persianYear = persianDate.Year;
@@ -265,30 +286,31 @@ namespace DNTPersianUtils.Core
                 return $"فردا {PersianCulture.GetPersianWeekDayName(persianYear, persianMonth, persianDay)}{hhMm}";
             }
 
-            var dayStr = $"، {ToPersianDateTextify(persianYear, persianMonth, persianDay)}{hhMm}";
+            var dayStr = includePersianDate ? $"، {ToPersianDateTextify(persianYear, persianMonth, persianDay)}{hhMm}" : string.Empty;
 
             if (totalSeconds < 30 * TimeConstants.Day)
             {
-                return $"{(int)Math.Abs(totalDays)} روز{suffix}{dayStr}";
+                return Invariant($"{(int)Math.Abs(totalDays)} روز{suffix}{dayStr}");
             }
 
             if (totalSeconds < 12 * TimeConstants.Month)
             {
                 int months = Convert.ToInt32(Math.Floor((double)Math.Abs(diff.Days) / 30));
-                return months <= 1 ? $"1 ماه{suffix}{dayStr}" : $"{months} ماه{suffix}{dayStr}";
+                return months <= 1 ? Invariant($"1 ماه{suffix}{dayStr}") : Invariant($"{months} ماه{suffix}{dayStr}");
             }
 
             var years = Convert.ToInt32(Math.Floor((double)Math.Abs(diff.Days) / 365));
             var daysMonths = (double)Math.Abs(diff.Days) / 30;
             var nextMonths = Convert.ToInt32(Math.Truncate(daysMonths)) - (years * 12) - 1;
-            var nextMonthsStr = nextMonths <= 0 ? "" : $"{(years >= 1 ? " و " : "")}{nextMonths} ماه";
+            var and = years >= 1 ? " و " : "";
+            var nextMonthsStr = nextMonths <= 0 ? "" : Invariant($"{and}{nextMonths} ماه");
 
             if (years < 1)
             {
                 return $"{nextMonthsStr}{suffix}{dayStr}";
             }
 
-            return $"{years} سال{nextMonthsStr}{suffix}{dayStr}";
+            return Invariant($"{years} سال{nextMonthsStr}{suffix}{dayStr}");
         }
     }
 }

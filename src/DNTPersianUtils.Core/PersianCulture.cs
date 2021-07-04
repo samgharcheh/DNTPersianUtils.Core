@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Threading;
@@ -14,8 +15,8 @@ namespace DNTPersianUtils.Core
         /// <summary>
         /// معادل فارسی روزهای هفته میلادی
         /// </summary>
-        public static readonly IDictionary<DayOfWeek, string> PersianDayWeekNames = new Dictionary<DayOfWeek, string>
-          {
+        public static IDictionary<DayOfWeek, string> PersianDayWeekNames { get; } = new Dictionary<DayOfWeek, string>
+        {
             {DayOfWeek.Saturday, "شنبه"},
             {DayOfWeek.Sunday,  "یک شنبه"},
             {DayOfWeek.Monday,  "دو شنبه"},
@@ -23,12 +24,54 @@ namespace DNTPersianUtils.Core
             {DayOfWeek.Wednesday, "چهار شنبه"},
             {DayOfWeek.Thursday, "پنج شنبه"},
             {DayOfWeek.Friday, "جمعه"}
-          };
+        };
+
+        /// <summary>
+        /// معادل فارسی روزهای هفته میلادی
+        /// </summary>
+        public static IEnumerable<string> PersianDayNamesOfWeek { get; } = new List<string>
+        {
+            "شنبه",
+            "یک شنبه",
+            "دو شنبه",
+            "سه شنبه",
+            "چهار شنبه",
+            "پنج شنبه",
+            "جمعه"
+        };
+
+        /// <summary>
+        /// معادل کوتاه فارسی روزهای هفته میلادی
+        /// </summary>
+        public static IDictionary<DayOfWeek, string> ShortPersianDayNamesOfWeek { get; } = new Dictionary<DayOfWeek, string>
+        {
+            {DayOfWeek.Saturday, "ش"},
+            {DayOfWeek.Sunday,  "ی"},
+            {DayOfWeek.Monday,  "د"},
+            {DayOfWeek.Tuesday, "س"},
+            {DayOfWeek.Wednesday, "چ"},
+            {DayOfWeek.Thursday, "پ"},
+            {DayOfWeek.Friday, "ج"}
+        };
+
+        /// <summary>
+        /// معادل کوتاه فارسی روزهای هفته میلادی
+        /// </summary>
+        public static IEnumerable<string> ShortPersianDayWeekNames { get; } = new List<string>
+        {
+            "ش",
+            "ی",
+            "د",
+            "س",
+            "چ",
+            "پ",
+            "ج"
+        };
 
         /// <summary>
         /// عدد به حروف روزهای شمسی
         /// </summary>
-        public static readonly IDictionary<int, string> PersianMonthDayNumberNames = new Dictionary<int, string>
+        public static IDictionary<int, string> PersianMonthDayNumberNames { get; } = new Dictionary<int, string>
            {
              { 1, "یکم" },
              { 2, "دوم" },
@@ -66,7 +109,7 @@ namespace DNTPersianUtils.Core
         /// <summary>
         /// نام فارسی ماه‌های شمسی
         /// </summary>
-        public static readonly IDictionary<int, string> PersianMonthNames = new Dictionary<int, string>
+        public static IDictionary<int, string> PersianMonthNames { get; } = new Dictionary<int, string>
            {
             {1, "فروردین"},
             {2, "اردیبهشت"},
@@ -95,9 +138,14 @@ namespace DNTPersianUtils.Core
         /// Returns the day-of-month part of this <see cref="DateTime"/> localized in Persian calendar.
         /// </summary>
         /// <param name="dateTime">The <see cref="DateTime"/> to extend.</param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
         /// <returns>An integer between 1 and 31 representing the day-of-month part of this <see cref="DateTime"/>.</returns>
-        public static int GetPersianDayOfMonth(this DateTime dateTime)
+        public static int GetPersianDayOfMonth(this DateTime dateTime, bool convertToIranTimeZone = true)
         {
+            if (dateTime.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                dateTime = dateTime.ToIranTimeZoneDateTime();
+            }
             return Instance.DateTimeFormat.Calendar.GetDayOfMonth(dateTime);
         }
 
@@ -105,9 +153,14 @@ namespace DNTPersianUtils.Core
         /// Returns the month part of this <see cref="DateTime"/> localized in Persian calendar.
         /// </summary>
         /// <param name="dateTime">The <see cref="DateTime"/> to extend.</param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
         /// <returns>An integer between 1 and 12 representing the month part of this <see cref="DateTime"/>.</returns>
-        public static int GetPersianMonth(this DateTime dateTime)
+        public static int GetPersianMonth(this DateTime dateTime, bool convertToIranTimeZone = true)
         {
+            if (dateTime.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                dateTime = dateTime.ToIranTimeZoneDateTime();
+            }
             return Instance.DateTimeFormat.Calendar.GetMonth(dateTime);
         }
 
@@ -118,7 +171,7 @@ namespace DNTPersianUtils.Core
         {
             if (dayNumber < 1 || dayNumber > 31)
             {
-                throw new ArgumentOutOfRangeException($"{nameof(dayNumber)} must be between 1, 31.");
+                throw new ArgumentOutOfRangeException(nameof(dayNumber), $"{nameof(dayNumber)} must be between 1, 31.");
             }
             return PersianMonthDayNumberNames[dayNumber];
         }
@@ -130,7 +183,7 @@ namespace DNTPersianUtils.Core
         {
             if (monthNumber < 1 || monthNumber > 12)
             {
-                throw new ArgumentOutOfRangeException($"{nameof(monthNumber)} must be between 1, 12.");
+                throw new ArgumentOutOfRangeException(nameof(monthNumber), $"{nameof(monthNumber)} must be between 1, 12.");
             }
             return PersianMonthNames[monthNumber];
         }
@@ -154,18 +207,26 @@ namespace DNTPersianUtils.Core
         /// <summary>
         /// گرفتن نام فارسی روزهای هفته
         /// </summary>
-        public static string GetPersianWeekDayName(this DateTime dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string GetPersianWeekDayName(this DateTime dt, bool convertToIranTimeZone = true)
         {
-            var dateParts = dt.ToPersianYearMonthDay();
+            if (dt.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                dt = dt.ToIranTimeZoneDateTime();
+            }
+            var dateParts = dt.ToPersianYearMonthDay(false);
             return PersianDayWeekNames[new PersianCalendar().ToDateTime(dateParts.Year, dateParts.Month, dateParts.Day, dt.Hour, dt.Minute, dt.Second, 0).DayOfWeek];
         }
 
         /// <summary>
         /// گرفتن نام فارسی روزهای هفته
         /// </summary>
-        public static string GetPersianWeekDayName(this DateTime? dt)
+        /// <param name="dt"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static string GetPersianWeekDayName(this DateTime? dt, bool convertToIranTimeZone = true)
         {
-            return dt == null ? string.Empty : GetPersianWeekDayName(dt.Value);
+            return dt == null ? string.Empty : GetPersianWeekDayName(dt.Value, convertToIranTimeZone);
         }
 
         /// <summary>
@@ -192,9 +253,14 @@ namespace DNTPersianUtils.Core
         /// Returns the year part of this <see cref="DateTime"/> localized in Persian calendar.
         /// </summary>
         /// <param name="dateTime">The <see cref="DateTime"/> to extend.</param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
         /// <returns>An integer between 1 and 9999 representing the year part of this <see cref="DateTime"/>.</returns>
-        public static int GetPersianYear(this DateTime dateTime)
+        public static int GetPersianYear(this DateTime dateTime, bool convertToIranTimeZone = true)
         {
+            if (dateTime.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                dateTime = dateTime.ToIranTimeZoneDateTime();
+            }
             return Instance.DateTimeFormat.Calendar.GetYear(dateTime);
         }
 
@@ -215,9 +281,11 @@ namespace DNTPersianUtils.Core
         /// سال شمسی معادل را محاسبه کرده و سپس
         /// تاریخ روزهای ابتدا و انتهای آن سال شمسی را بازگشت می‌دهد
         /// </summary>
-        public static PersianYear GetPersianYearStartAndEndDates(this DateTime dateTime)
+        /// <param name="dateTime"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static PersianYear GetPersianYearStartAndEndDates(this DateTime dateTime, bool convertToIranTimeZone = true)
         {
-            var persianYear = dateTime.GetPersianYear();
+            var persianYear = dateTime.GetPersianYear(convertToIranTimeZone);
             return persianYear.GetPersianYearStartAndEndDates();
         }
 
@@ -237,11 +305,15 @@ namespace DNTPersianUtils.Core
         public static PersianMonth GetPersianMonthStartAndEndDates(this int persianYear, int persianMonth)
         {
             var persianCalendar = new PersianCalendar();
-            var isLeapYear = persianCalendar.IsLeapYear(persianYear);
+            var startDate = persianCalendar.ToDateTime(persianYear, persianMonth, 1, 0, 0, 0, 0);
+            var endDate = persianCalendar.ToDateTime(persianYear, persianMonth, persianYear.GetPersianMonthLastDay(persianMonth), 23, 59, 59, 0);
             return new PersianMonth
             {
-                StartDate = persianCalendar.ToDateTime(persianYear, persianMonth, 1, 0, 0, 0, 0),
-                EndDate = persianCalendar.ToDateTime(persianYear, persianMonth, persianYear.GetPersianMonthLastDay(persianMonth), 23, 59, 59, 0)
+                StartDate = startDate,
+                EndDate = endDate,
+                LastDayNumber = GetPersianMonthLastDay(persianYear, persianMonth),
+                StartDateDayOfWeek = startDate.DayOfWeek.GetPersianWeekDayNumber(),
+                EndDateDayOfWeek = endDate.DayOfWeek.GetPersianWeekDayNumber()
             };
         }
 
@@ -249,10 +321,12 @@ namespace DNTPersianUtils.Core
         /// ماه شمسی معادل را محاسبه کرده و سپس
         /// تاریخ روزهای ابتدا و انتهای آن ماه شمسی را بازگشت می‌دهد
         /// </summary>
-        public static PersianMonth GetPersianMonthStartAndEndDates(this DateTime dateTime)
+        /// <param name="dateTime"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static PersianMonth GetPersianMonthStartAndEndDates(this DateTime dateTime, bool convertToIranTimeZone = true)
         {
-            var persianYear = dateTime.GetPersianYear();
-            var persianMonth = dateTime.GetPersianMonth();
+            var persianYear = dateTime.GetPersianYear(convertToIranTimeZone);
+            var persianMonth = dateTime.GetPersianMonth(convertToIranTimeZone);
             return persianYear.GetPersianMonthStartAndEndDates(persianMonth);
         }
 
@@ -269,6 +343,49 @@ namespace DNTPersianUtils.Core
         }
 
         /// <summary>
+        /// تاریخ روزهای ابتدا و انتهای هفته شمسی را بازگشت می‌دهد
+        /// </summary>
+        public static PersianWeek GetPersianWeekStartAndEndDates(this int persianYear, int persianMonth, int persianDay)
+        {
+            var dateTime = new PersianCalendar().ToDateTime(persianYear, persianMonth, persianDay, 0, 0, 0, 0);
+            return GetPersianWeekStartAndEndDates(dateTime);
+        }
+
+        /// <summary>
+        /// هفته شمسی معادل را محاسبه کرده و سپس
+        /// تاریخ روزهای ابتدا و انتهای آن هفته شمسی را بازگشت می‌دهد
+        /// </summary>
+        /// <param name="dateTime"></param>
+        /// <param name="convertToIranTimeZone">اگر تاریخ و زمان با فرمت UTC باشند، ابتدا آن‌ها را به منطقه‌ی زمانی ایران تبدیل می‌کند</param>
+        public static PersianWeek GetPersianWeekStartAndEndDates(this DateTime dateTime, bool convertToIranTimeZone = true)
+        {
+            if (dateTime.Kind == DateTimeKind.Utc && convertToIranTimeZone)
+            {
+                dateTime = dateTime.ToIranTimeZoneDateTime();
+            }
+
+            var firstDayOfWeek = Instance.DateTimeFormat.FirstDayOfWeek;
+            var offset = -1 * ((7 + (dateTime.DayOfWeek - firstDayOfWeek)) % 7);
+            var firstDayOfWeekDate = dateTime.AddDays(offset);
+            var lastDayOfWeekDate = firstDayOfWeekDate.AddDays(6);
+            return new PersianWeek
+            {
+                StartDate = firstDayOfWeekDate,
+                EndDate = new DateTime(lastDayOfWeekDate.Year, lastDayOfWeekDate.Month, lastDayOfWeekDate.Day, 23, 59, 59, 0)
+            };
+        }
+
+        /// <summary>
+        /// هفته شمسی معادل را محاسبه کرده و سپس
+        /// تاریخ روزهای ابتدا و انتهای آن هفته شمسی را بازگشت می‌دهد
+        /// </summary>
+        public static PersianWeek GetPersianWeekStartAndEndDates(this DateTimeOffset dateTimeOffset, DateTimeOffsetPart dateTimeOffsetPart = DateTimeOffsetPart.IranLocalDateTime)
+        {
+            var dateTime = dateTimeOffset.GetDateTimeOffsetPart(dateTimeOffsetPart);
+            return GetPersianWeekStartAndEndDates(dateTime);
+        }
+
+        /// <summary>
         /// شماره آخرین روز ماه شمسی را بر می‌گرداند
         /// </summary>
         /// <param name="persianYear">سال شمسی</param>
@@ -278,7 +395,7 @@ namespace DNTPersianUtils.Core
         {
             if (persianMonth > 12 || persianMonth <= 0)
             {
-                throw new ArgumentOutOfRangeException("ماه وارد شده معتبر نیست.");
+                throw new ArgumentOutOfRangeException(nameof(persianMonth), "ماه وارد شده معتبر نیست.");
             }
 
             if (persianMonth <= 6)
@@ -295,8 +412,47 @@ namespace DNTPersianUtils.Core
         }
 
         /// <summary>
+        /// دریافت معادل عدد شمسی نام روز هفته‌ی میلادی؛ شروع شده از عدد یک.
+        /// برای مثال سان‌دی معادل روز 2 هفته شمسی است
+        /// </summary>
+        public static int GetPersianWeekDayNumber(this DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Saturday => 1,
+                DayOfWeek.Sunday => 2,
+                DayOfWeek.Monday => 3,
+                DayOfWeek.Tuesday => 4,
+                DayOfWeek.Wednesday => 5,
+                DayOfWeek.Thursday => 6,
+                DayOfWeek.Friday => 7,
+                _ => throw new ArgumentOutOfRangeException(nameof(dayOfWeek), "روز وارد شده معتبر نیست."),
+            };
+        }
+
+        /// <summary>
+        /// دریافت معادل عدد شمسی نام روز هفته‌ی میلادی؛ شروع شده از عدد یک.
+        /// برای مثال سان‌دی معادل روز 2 هفته شمسی است
+        /// </summary>
+        public static int GetPersianWeekDayNumber(this DateTime dateTime)
+        {
+            return GetPersianWeekDayNumber(dateTime.DayOfWeek);
+        }
+
+        /// <summary>
+        /// دریافت معادل عدد شمسی نام روز هفته‌ی میلادی؛ شروع شده از عدد یک.
+        /// برای مثال سان‌دی معادل روز 2 هفته شمسی است
+        /// </summary>
+        public static int GetPersianWeekDayNumber(this int persianYear, int persianMonth)
+        {
+            return GetPersianWeekDayNumber(new PersianCalendar().ToDateTime(persianYear, persianMonth, 1, 0, 0, 0, 0));
+        }
+
+        /// <summary>
         /// اصلاح تقویم فرهنگ فارسی
         /// </summary>
+        [SuppressMessage("Microsoft.Usage", "S3011:Make sure that this accessibility bypass is safe here",
+                    Justification = "We need this to correct a mistake!")]
         private static CultureInfo getPersianCulture()
         {
             var persianCulture = new CultureInfo("fa-IR")

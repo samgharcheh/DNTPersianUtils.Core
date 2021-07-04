@@ -6,19 +6,51 @@ namespace DNTPersianUtils.Core
     /// <summary>
     /// Determines whether the specified value of the object is a valid Persian letter.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter)]
     public sealed class ShouldContainPersianLettersOrNumbersAttribute : ValidationAttribute
     {
         /// <summary>
+        /// Can a user enter a text containing whitespaces
+        /// </summary>
+        public bool AllowWhitespace { set; get; }
+
+        /// <summary>
         /// Determines whether the specified value of the object is valid.
         /// </summary>
-        public override bool IsValid(object value)
+        public override bool IsValid(object? value)
         {
-            if (value == null)
+            if (value is null)
             {
                 return true; // returning false, makes this field required.
             }
-            return value.ToString().ContainsFarsi();
+
+            var valStr = value.ToString();
+            if (string.IsNullOrWhiteSpace(valStr))
+            {
+                return true; // returning false, makes this field required.
+            }
+
+            return valStr.ContainsFarsi(AllowWhitespace);
+        }
+
+        /// <summary>
+        /// Determines whether the specified value of the object is valid.
+        /// </summary>
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        {
+            if (IsValid(value))
+            {
+                return null;
+            }
+
+            if (validationContext == null)
+            {
+                throw new ArgumentNullException(nameof(validationContext));
+            }
+
+            return string.IsNullOrWhiteSpace(validationContext.MemberName)
+                ? new ValidationResult(ErrorMessage)
+                : new ValidationResult(ErrorMessage, new[] { validationContext.MemberName });
         }
     }
 }
